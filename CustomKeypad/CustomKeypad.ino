@@ -3,7 +3,6 @@
 #include <MFRC522.h>
 #include <SPI.h>
 #include <Servo.h>
-#include <IRremote.h>
 
 const byte ROWS = 4; //four rows
 const byte COLS = 4; //four columns
@@ -43,12 +42,6 @@ String productes[10] = {"cal", "cal", "boli"};
 bool calc_count = true;
 bool aspress = false;
 
-/* remote
-  int RECV_PIN = 41;
-  IRrecv ir(RECV_PIN);
-  decode_results results;
-*/
-
 void setup() {
   Serial.begin(9600);
   Serial.println("asdf");
@@ -59,7 +52,6 @@ void setup() {
   allow = false;
   myservo.attach(40);
   myservo.write(0);
-  //ir.enableIRIn();
 }
 
 void brunzidor() {
@@ -222,12 +214,6 @@ void register_product(String name, int value) {
     }
   }
 }
-// 7: 32C6FDF7
-// 8: 1BC0157B
-// 9: 3EC3FC1B
-// 4: FF10EF
-// 5: FF38C7
-// 6: FF5AA5
 
 void loop() {
   if (mfrc522.PICC_IsNewCardPresent()) {

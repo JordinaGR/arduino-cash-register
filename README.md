@@ -7,4 +7,3 @@ It registers items and cash. Only staff members are allowed to use it, and it re
 ## coses a fer
 1. a la funció keypadd canviar tots els ifs per switch  cases
 2. Afegir pantalles lcd
-3. Canviar el teclat per mando a distància ja que té més botons que necessitem
