@@ -1,32 +1,35 @@
 #include <EEPROM.h>
 #include <MFRC522.h>
 #include <SPI.h>
-#include <Servo.h>
 #include <IRremote.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+#include <LiquidCrystal.h>
 
 /*
- * Coses a fer:
- * afegir targetes treballadors
- * configurar pantalles
- * fer els registres i utilitzar eeprom
- * aconseguir registrar hora i dia
- * config bé les targetes productes i debolucuins
- * config targeta maste que pot accedir als registres
- * forma de representar els registres a les pantalles
- * 
- */
+   Coses a fer:
+   afegir targetes treballadors
+   configurar pantalles
+   fer els registres i utilitzar eeprom
+   aconseguir registrar hora i dia
+   config bé les targetes productes i debolucuins
+   config targeta maste que pot accedir als registres
+   forma de representar els registres a les pantalles
+
+*/
 
 // screen 20x4
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 
+// screen 16x2
+const int rs = 45, en = 44, d4 = 43, d5 = 42, d6 = 41, d7 = 40;
+LiquidCrystal lcd2(rs, en, d4, d5, d6, d7);
+
 // remote
-int RECV_PIN = 41;
+int RECV_PIN = 8;
 IRrecv ir(RECV_PIN);
 decode_results results;
 
-Servo myservo;    //create a servo object
 int value;
 int int_num;
 int var;
@@ -45,7 +48,7 @@ MFRC522 mfrc522(SS_PIN, RST_PIN);
 bool allow = false;
 static byte kpadState;
 
-String productes[13] = {"tg1", "tg1", "tg1", "tg1", "tg2", "tg2", "tg2", "tg2", "tg3", "tg3", "tg3", "tg3", "tgJ"};
+String productes[13] = {"tg3", "tg3", "tg4", "tg4", "tg5", "tg5", "tg6", "tg6", "tgJ"};
 
 bool calc_count = true;
 bool aspress = false;
@@ -63,12 +66,15 @@ void setup() {
   pinMode(buzzer, OUTPUT);
   mfrc522.PCD_Init();
   allow = false;
-  myservo.attach(40);
-  myservo.write(0);
   ir.enableIRIn(); // Start the receiver
   lcd.begin();
   lcd.print("_");
+  lcd2.begin(16, 2);
+  analogWrite(2, 50);
+  lcd2.print("s");
+
 }
+void(* resetFunc) (void) = 0;
 
 void brunzidor() {
   digitalWrite(buzzer, HIGH);
@@ -95,19 +101,24 @@ void brunzidor1() {
 void remote_num(char num) {
   numbers += num;
   Serial.print(num);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(numbers);
   brunzidor();
 }
 
 void tornar_canvi(char num) {
   diners_client += num;
   Serial.print(num);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(numbers);
   brunzidor();
 
 }
 
 bool comanda_oberta;
 void numeros_mando() {
-
   while (comanda_oberta == true) {
     if (ir.decode(&results)) {
       if (results.value == 0xFFFFFFFF) {
@@ -180,6 +191,10 @@ void numeros_mando() {
           key = results.value;
           ir.resume();
           break;
+        case 0xFFA25D:
+          // boto vermell
+          resetFunc();
+          break;
       }
       key = results.value;
       ir.resume();
@@ -248,6 +263,7 @@ void keypadd() {
       case 0xFF9867:
         // EQ/esbrrar
         numbers = "";
+        lcd.clear();
         brunzidor();
         break;
 
@@ -255,6 +271,9 @@ void keypadd() {
         // st/rept acabar comanda
         brunzidor();
         Serial.println(preu_client);
+        lcd2.clear();
+        lcd2.setCursor(0, 0);
+        lcd2.print("Preu: " + preu_client);
         delay(200);
         comanda_oberta = true;
         Serial.println("Entra el que paga el client ");
@@ -268,6 +287,8 @@ void keypadd() {
         // volum menys
         Serial.println();
         Serial.println(value);
+        lcd.setCursor(0, 16);
+        lcd.print(value);
         brunzidor();
         break;
 
@@ -278,6 +299,9 @@ void keypadd() {
         numbers = "";
         Serial.println();
         Serial.println(value);
+        Serial.println(value);
+        lcd.setCursor(0, 16);
+        lcd.print(value);
         brunzidor();
         break;
 
@@ -288,6 +312,9 @@ void keypadd() {
         numbers = "";
         Serial.println();
         Serial.println(value);
+        Serial.println(value);
+        lcd.setCursor(0, 16);
+        lcd.print(value);
         brunzidor();
         break;
 
@@ -314,6 +341,10 @@ void keypadd() {
       case 0xFFC23D:
         // fletxa dreta
         break;
+      case 0xFFA25D:
+        // boto vermell
+        resetFunc();
+        break;
 
     }
     key = results.value;
@@ -332,39 +363,94 @@ String getID() {
   return id;
 }
 
-void open_box() {
-  myservo.write(180);
-}
-
-void close_box() {
-  myservo.write(0);
+int append(String *arr) {
+  int i;
+  for (i = 0; i < 13; i++) {
+    if (arr[i] == "") {
+      return i;
+      break;
+    }
+  }
+  return -1;
 }
 
 void entrar_productes() {
   delay(100);
   ir.resume();
-  while (aspress == true) {
-    int count = 1;
+  String nom_targeta = "";
+  bool quantitat_targetes = false;
+
+  while (aspress == true && quantitat_targetes == false) {
+    delay(200);
+
     if (mfrc522.PICC_IsNewCardPresent()) {
-      String uid = getID();
-      uid = uid.substring(1);
-      if ((uid == "5A FE 0B 7B" || uid == "E9 A2 0C 7B" || uid == "B5 55 0C 7B" || uid == "9B 52 12 7B") && allow == true) { // producte
-        brunzidor();
-        int i;
-        for (i = 0; i < 13; i++) {
-          if (productes[i] == "" && count == 1) {
-            productes[i] = "tg1";
-            Serial.println("Una tg1 més");
-            count--;
-          }
+      if (mfrc522.PICC_ReadCardSerial()) {
+        String uid = getID();
+        uid = uid.substring(1);
+
+        if (uid == "B9 6F E4 B2" && allow == true && quantitat_targetes == false) { // producte J
+          brunzidor();
+          nom_targeta = "tgJ";
+          quantitat_targetes = true;
         }
-        if (count == 1) {
-          Serial.println("No queda espai al magatzem");
-          aspress = false;
+
+        // targetes grup 1 (1-2)
+        if ((uid == "5A FE 0B 7B" || uid == "E9 A2 0C 7B") && allow == true && quantitat_targetes == false) { // producte
+          brunzidor();
+          nom_targeta = "tg1";
+          quantitat_targetes = true;
+        }
+
+        // targetes grup 2 (3-4)
+        if ((uid == "B5 55 0C 7B" || uid == "9B 52 12 7B") && allow == true && quantitat_targetes == false) { // producte
+          brunzidor();
+          nom_targeta = "tg2";
+          quantitat_targetes = true;
+        }
+
+        // targetes grup 3 (5-6)
+        if ((uid == "A6 00 0D 7B" || uid == "A2 76 12 7B") && allow == true && quantitat_targetes == false) { // producte
+          brunzidor();
+          nom_targeta = "tg3";
+          quantitat_targetes = true;
+        }
+
+        // targetes grup 4 (7-8)
+        if ((uid == "A0 22 12 7B" || uid == "27 41 0C 7B") && allow == true && quantitat_targetes == false) { // producte
+          brunzidor();
+          nom_targeta = "tg4";
+          quantitat_targetes = true;
+        }
+
+        // targetes grup 5 (9 - 10)
+        if ((uid == "95 DB 0B 7B" || uid == "37 02 0D 7B") && allow == true && quantitat_targetes == false) { // producte
+          brunzidor();
+          nom_targeta = "tg5";
+          quantitat_targetes = true;
+        }
+
+        // targetes grup 6 (11 - 12)
+        if ((uid == "D5 D0 0B 7B" || uid == "99 6D 0C 7B") && allow == true && quantitat_targetes == false) { // producte
+          brunzidor();
+          nom_targeta = "tg6";
+          quantitat_targetes = true;
         }
       }
     }
 
+    if (quantitat_targetes == true) {
+      int index = append(productes);
+      if (index != -1) {
+        productes[index] = nom_targeta;
+        Serial.println("Una " +  nom_targeta + " més");
+        nom_targeta = "";
+        quantitat_targetes = false;
+      }
+      else if (index == -1) {
+        Serial.println("No queda espai al magatzem");
+        aspress = false;
+      }
+    }
     if (ir.decode(&results)) {
       if (results.value == 0xFFFFFFFF) {
         results.value = key;
@@ -375,6 +461,10 @@ void entrar_productes() {
           // *
           aspress = false;
           brunzidor();
+          break;
+        case 0xFFA25D:
+          // boto vermell
+          resetFunc();
           break;
 
       }
@@ -408,7 +498,7 @@ void register_product(String name, int value) {
 void loop() {
   if (aspress == true)
     entrar_productes();
-  
+
   if (allow == true)
     keypadd();
 
@@ -420,19 +510,34 @@ void loop() {
         register_product("tgJ", 2000);
       }
 
-      // targetes grup 1 (1-4)
-      if ((uid == "5A FE 0B 7B" || uid == "E9 A2 0C 7B" || uid == "B5 55 0C 7B" || uid == "9B 52 12 7B") && allow == true && aspress == false) { // producte
+      // targetes grup 1 (1-2)
+      if ((uid == "5A FE 0B 7B" || uid == "E9 A2 0C 7B") && allow == true && aspress == false) { // producte
         register_product("tg1", 100);
       }
 
-      // targetes grup 2 (5-8)
-      if ((uid == "A6 00 0D 7B" || uid == "A2 76 12 7B" || uid == "A0 22 12 7B" || uid == "27 41 0C 7B") && allow == true && aspress == false) { // producte
+      // targetes grup 2 (3-4)
+      if ((uid == "B5 55 0C 7B" || uid == "9B 52 12 7B") && allow == true && aspress == false) { // producte
         register_product("tg2", 200);
       }
 
-      // targetes grup 3 (9 - 12)
-      if ((uid == "95 DB 0B 7B" || uid == "37 02 0D 7B" || uid == "D5 D0 0B 7B" || uid == "99 6D 0C 7B") && allow == true && aspress == false) { // producte
+      // targetes grup 3 (5-6)
+      if ((uid == "A6 00 0D 7B" || uid == "A2 76 12 7B") && allow == true && aspress == false) { // producte
         register_product("tg3", 300);
+      }
+
+      // targetes grup 4 (7-8)
+      if ((uid == "A0 22 12 7B" || uid == "27 41 0C 7B") && allow == true && aspress == false) { // producte
+        register_product("tg4", 400);
+      }
+
+      // targetes grup 5 (9 - 10)
+      if ((uid == "95 DB 0B 7B" || uid == "37 02 0D 7B") && allow == true && aspress == false) { // producte
+        register_product("tg5", 500);
+      }
+
+      // targetes grup 6 (11 - 12)
+      if ((uid == "D5 D0 0B 7B" || uid == "99 6D 0C 7B") && allow == true && aspress == false) { // producte
+        register_product("tg6", 600);
       }
 
       if (uid == "BA 00 CF 81" && allow == true ) {
