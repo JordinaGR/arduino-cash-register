@@ -8,64 +8,68 @@
 
 /*
    Coses a fer:
+
    afegir targetes treballadors
-   configurar pantalles
+        configurar pantalles
    fer els registres i utilitzar eeprom
    aconseguir registrar hora i dia
-   config bé les targetes productes i debolucuins
-   config targeta maste que pot accedir als registres
+        config bé les targetes productes i debolucuins4
+   config targeta master que pot accedir als registres
    forma de representar els registres a les pantalles
 
 */
 
-// screen 20x4
+// objecte screen 20x4
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 
-// screen 16x2
+// objecte screen 16x2
 const int rs = 45, en = 44, d4 = 43, d5 = 42, d6 = 41, d7 = 40;
 LiquidCrystal lcd2(rs, en, d4, d5, d6, d7);
 
-// remote
+// objecte remote
 int RECV_PIN = 8;
 IRrecv ir(RECV_PIN);
 decode_results results;
 
-int value;
-int int_num;
-int var;
-String numbers = "";
+int value; // diners caixa
+int int_num;  // nombre entrat tipus int
+String numbers = ""; // int_num en string
 
-int addr;
-int buzzer = 7;
+int addr; // adressa hdd
+int buzzer = 7; // brunzidor
 
-int preu_client = 0;
+int preu_client = 0;  // que paga el client
 
 // rfid
 #define SS_PIN 53
 #define RST_PIN 49
-MFRC522 mfrc522(SS_PIN, RST_PIN);
+MFRC522 mfrc522(SS_PIN, RST_PIN);  //crear objecte rfid
 
-bool allow = false;
-static byte kpadState;
+bool allow = false; // acces al teclat, s'activa amb la tarjeta correcte
+static byte kpadState; //si es detecten tecles al teclat
 
-String productes[13] = {"tg3", "tg3", "tg4", "tg4", "tg5", "tg5", "tg6", "tg6", "tgJ"};
+// llistat d'estoc en forma d'array
+String productes[13] = {"tg1", "tg1", "tg2", "tg2", "tg3", "tg3", "tg4", "tg4", "tg5", "tg5", "tg6", "tg6", "tgJ"};
 
-bool calc_count = true;
-bool aspress = false;
-unsigned long key;
+bool calc_count = true; // variable  perque detecti les tarjetes un sol cop
+bool aspress = false; // saber si està activat per entrar productes
+unsigned long key;  // tecla clicada
 
-String diners_client = "";
-int canvi_caixer;
-int int_diners_client;
+String diners_client = "";  // diners que dona el client en str
+int canvi_caixer;   // canvi que ha de donar el caixer
+int int_diners_client;  // diners client en int
+
+bool master = false; // si s'ha detectat la tarjeta master
+
+String registre[][3] = {};
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(9600); // inicialitzar el port i tots els objectes creats al inicii definir inputs i outputs
   Serial.println("asdf");
   SPI.begin();
   value = EEPROM.read(0);
   pinMode(buzzer, OUTPUT);
   mfrc522.PCD_Init();
-  allow = false;
   ir.enableIRIn(); // Start the receiver
   lcd.begin();
   lcd.print("_");
@@ -74,8 +78,9 @@ void setup() {
   lcd2.print("s");
 
 }
-void(* resetFunc) (void) = 0;
+void(* resetFunc) (void) = 0; // funció per reiniciar el programa
 
+// funcio perque soni el brunzidor un cop
 void brunzidor() {
   digitalWrite(buzzer, HIGH);
   delay(200);
@@ -83,6 +88,7 @@ void brunzidor() {
   delay(200);
 }
 
+// funció perque soni el brunzidor diversos cops per les tarjetes
 void brunzidor1() {
   digitalWrite(buzzer, HIGH);
   delay(200);
@@ -98,26 +104,29 @@ void brunzidor1() {
 
 }
 
+// afegir els nombres clicats del teclat a la variable "numbers" en forma de str
 void remote_num(char num) {
+  brunzidor();
   numbers += num;
   Serial.print(num);
-  lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print(numbers);
-  brunzidor();
 }
 
+// el mateix que l'anterior però pel canvi quan es ven un producte
 void tornar_canvi(char num) {
+  brunzidor();
   diners_client += num;
   Serial.print(num);
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print(numbers);
-  brunzidor();
-
+  lcd.setCursor(0, 1);
+  lcd.print(diners_client);
+  lcd2.setCursor(0, 1);
+  lcd2.print(diners_client);
 }
 
-bool comanda_oberta;
+bool comanda_oberta;  // definir una variable per saber si la comanda està oberta
+
+// funcions que accedirem quan la comanda estigui oberta
 void numeros_mando() {
   while (comanda_oberta == true) {
     if (ir.decode(&results)) {
@@ -178,19 +187,26 @@ void numeros_mando() {
         case 0xFFB04F:
           // st/rept acabar comanda
           brunzidor();
-          int_diners_client = diners_client.toInt();
+          int_diners_client = diners_client.toInt();  // pasar la variable de str a int
           delay(100);
-          lcd.clear();
-          lcd.setCursor(0, 0);
-          delay(1000);
+          lcd.clear();  // escriure a les pantalles
+          lcd2.clear();
+          lcd2.setCursor(0, 1);
+          lcd2.print(int_diners_client - preu_client);
+          lcd2.print("E");
           lcd.setCursor(0, 1);
           lcd.print(int_diners_client - preu_client);
-          value += preu_client;
-          preu_client = 0;
+          lcd.print("E");
+          delay(4000);
+          lcd.clear();
+          lcd2.clear();
+          value += preu_client; // sumar els diners a la caixa
+          preu_client = 0;  // reinicial les variables per a la proxima comanda
           comanda_oberta = false;
           key = results.value;
           ir.resume();
           break;
+
         case 0xFFA25D:
           // boto vermell
           resetFunc();
@@ -202,8 +218,8 @@ void numeros_mando() {
   }
 }
 
-
-void keypadd() {
+bool func_stop = false; // definir una variable per saber si la comanda està començada o no
+void keypadd() {  // funció per detectar la tecla que està seleccionada
   if (ir.decode(&results)) {
     if (results.value == 0xFFFFFFFF) {
       results.value = key;
@@ -262,73 +278,104 @@ void keypadd() {
 
       case 0xFF9867:
         // EQ/esbrrar
+        // essborrar el que hi ha escrit fins ara de la variable i de la pantalla
         numbers = "";
-        lcd.clear();
+        int i;
+        for (i = 0; i < 5; i++) {
+          lcd.setCursor(i, 0);
+          lcd.print(' ');
+        }
+
         brunzidor();
         break;
 
       case 0xFFB04F:
         // st/rept acabar comanda
         brunzidor();
-        Serial.println(preu_client);
+        Serial.println(preu_client);  // escriure a les pantalles 
+        lcd.clear();
         lcd2.clear();
         lcd2.setCursor(0, 0);
-        lcd2.print("Preu: " + preu_client);
+        lcd2.print(preu_client);
+        lcd2.print("E");
+        lcd.setCursor(0, 0);
+        lcd.print(preu_client);
+        lcd.print("E");
         delay(200);
-        comanda_oberta = true;
+        comanda_oberta = true;  // actualitzar les variables
         Serial.println("Entra el que paga el client ");
+        lcd.setCursor(0, 3);
+        lcd.print("Paga el client ");
         delay(100);
         key = results.value;
-        ir.resume();
-        numeros_mando();
+        ir.resume();  
+        numeros_mando();  // anar a la funció numeros_mando
         break;
 
       case 0xFFA857:
-        // volum menys
+        // volum menys - escriure el valanç de la caixa
         Serial.println();
         Serial.println(value);
-        lcd.setCursor(0, 16);
+        lcd.setCursor(16, 0);
         lcd.print(value);
         brunzidor();
         break;
 
       case 0xFFE01F:
-        // restar-fletxa avall
-        int_num = numbers.toInt();
-        value += int_num;
-        numbers = "";
-        Serial.println();
+        // sumar - fletxa avall
+        int_num = numbers.toInt();  // passar la variable numbers a int
+        value += int_num; // afegir el valor al registre de la caixa
+        numbers = ""; // reiniciar la variable
+        Serial.println(); // escriure a les pantalles
         Serial.println(value);
-        Serial.println(value);
-        lcd.setCursor(0, 16);
+        lcd.clear();
+        lcd.setCursor(16, 0);
         lcd.print(value);
         brunzidor();
         break;
 
       case 0xFF906F:
-        // fletxa amunt
+        // fletxa amunt - restar - el mateix que l'anterior però restant
         int_num = numbers.toInt();
         value -= int_num;
         numbers = "";
         Serial.println();
         Serial.println(value);
-        Serial.println(value);
-        lcd.setCursor(0, 16);
+        lcd.clear();
+        lcd.setCursor(16, 0);
         lcd.print(value);
         brunzidor();
         break;
 
       case 0xFF629D:
-        // volum + entrar stok
+        // volum + entrar stok - anar a la funció d'entrar estoc
         brunzidor();
         aspress = true;
+        lcd.setCursor(0, 0);
+        lcd.print("Entrant estoc");
         entrar_productes();
+        lcd.clear();
         break;
 
-      case 0xFFE21D:
-        // func-stop mostrar stok
-        brunzidor();
-        Serial.println(productes[0] + ' ' + productes[1] + ' ' + productes[2] + ' ' + productes[3] + ' ' + productes[4] + ' ' + productes[5] + ' ' + productes[6] + ' ' + productes[7] + ' ' + productes[8] + ' ' + productes[9] + ' ' + productes[10] + ' ' + productes[11] + ' ' + productes[12]);
+      case 0xFFE21D: // escriure a la pantalla l'estoc
+        if (func_stop == false) {
+          // func-stop mostrar stok
+          brunzidor();
+          Serial.println(productes[0] + ' ' + productes[1] + ' ' + productes[2] + ' ' + productes[3] + ' ' + productes[4] + ' ' + productes[5] + ' ' + productes[6] + ' ' + productes[7] + ' ' + productes[8] + ' ' + productes[9] + ' ' + productes[10] + ' ' + productes[11] + ' ' + productes[12]);
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print(productes[0] + ' ' + productes[1] + ' ' + productes[2] + ' ' + productes[3] + ' ' + productes[4]);
+          lcd.setCursor(0, 1);
+          lcd.print(productes[5] + ' ' + productes[6] + ' ' + productes[7] + ' ' + productes[8] + ' ' + productes[9]);
+          lcd.setCursor(0, 2);
+          lcd.print(productes[10] + ' ' + productes[11] + ' ' + productes[12]);
+          func_stop = true;
+        }
+        else if (func_stop == true) {
+          brunzidor();
+          lcd.clear();
+          func_stop = false;
+        }
         break;
 
       case 0xFF22DD:
@@ -352,7 +399,7 @@ void keypadd() {
   }
 }
 
-String getID() {
+String getID() {  // funció per obtenir l'ID de les targetes
   String id = "";
   for (byte i = 0; i < mfrc522.uid.size; i++)
   {
@@ -363,74 +410,74 @@ String getID() {
   return id;
 }
 
-int append(String *arr) {
+int append(String *arr) { // funció per trobar un espai buit a l'array passat com a argument, aquesta retorna un índex
   int i;
-  for (i = 0; i < 13; i++) {
+  for (i = 0; i < 13; i++) {  // loop que itera per tots els elements de l'array fins que hi ha una condició que fa que pari
     if (arr[i] == "") {
-      return i;
+      return i;   // retornar l'índex
       break;
     }
   }
   return -1;
 }
 
-void entrar_productes() {
+void entrar_productes() {   // funció per afegir productes a l'estoc
   delay(100);
   ir.resume();
-  String nom_targeta = "";
-  bool quantitat_targetes = false;
+  String nom_targeta = "";  // variable amb el nom del producte detectat
+  bool quantitat_targetes = false;  // saber si hi ha productes detectats
 
-  while (aspress == true && quantitat_targetes == false) {
+  while (aspress == true && quantitat_targetes == false) {  // un loop que funciona fins que cliques un altre cop la tecla
     delay(200);
 
-    if (mfrc522.PICC_IsNewCardPresent()) {
+    if (mfrc522.PICC_IsNewCardPresent()) {    // detectar targeta
       if (mfrc522.PICC_ReadCardSerial()) {
-        String uid = getID();
+        String uid = getID();   // anar a la funció getID per saber quina targeta s'ha utilitzat
         uid = uid.substring(1);
 
         if (uid == "B9 6F E4 B2" && allow == true && quantitat_targetes == false) { // producte J
-          brunzidor();
-          nom_targeta = "tgJ";
-          quantitat_targetes = true;
+          brunzidor();  // fes la funció brunzidor
+          nom_targeta = "tgJ";  // actualitza la variable nom_targeta i quantitat_targeta
+          quantitat_targetes = true;  
         }
 
         // targetes grup 1 (1-2)
-        if ((uid == "5A FE 0B 7B" || uid == "E9 A2 0C 7B") && allow == true && quantitat_targetes == false) { // producte
+        if ((uid == "5A FE 0B 7B" || uid == "E9 A2 0C 7B") && allow == true && quantitat_targetes == false) {
           brunzidor();
           nom_targeta = "tg1";
           quantitat_targetes = true;
         }
 
         // targetes grup 2 (3-4)
-        if ((uid == "B5 55 0C 7B" || uid == "9B 52 12 7B") && allow == true && quantitat_targetes == false) { // producte
+        if ((uid == "B5 55 0C 7B" || uid == "9B 52 12 7B") && allow == true && quantitat_targetes == false) {
           brunzidor();
           nom_targeta = "tg2";
           quantitat_targetes = true;
         }
 
         // targetes grup 3 (5-6)
-        if ((uid == "A6 00 0D 7B" || uid == "A2 76 12 7B") && allow == true && quantitat_targetes == false) { // producte
+        if ((uid == "A6 00 0D 7B" || uid == "A2 76 12 7B") && allow == true && quantitat_targetes == false) {
           brunzidor();
           nom_targeta = "tg3";
           quantitat_targetes = true;
         }
 
         // targetes grup 4 (7-8)
-        if ((uid == "A0 22 12 7B" || uid == "27 41 0C 7B") && allow == true && quantitat_targetes == false) { // producte
+        if ((uid == "A0 22 12 7B" || uid == "27 41 0C 7B") && allow == true && quantitat_targetes == false) {
           brunzidor();
           nom_targeta = "tg4";
           quantitat_targetes = true;
         }
 
         // targetes grup 5 (9 - 10)
-        if ((uid == "95 DB 0B 7B" || uid == "37 02 0D 7B") && allow == true && quantitat_targetes == false) { // producte
+        if ((uid == "95 DB 0B 7B" || uid == "37 02 0D 7B") && allow == true && quantitat_targetes == false) {
           brunzidor();
           nom_targeta = "tg5";
           quantitat_targetes = true;
         }
 
         // targetes grup 6 (11 - 12)
-        if ((uid == "D5 D0 0B 7B" || uid == "99 6D 0C 7B") && allow == true && quantitat_targetes == false) { // producte
+        if ((uid == "D5 D0 0B 7B" || uid == "99 6D 0C 7B") && allow == true && quantitat_targetes == false) {
           brunzidor();
           nom_targeta = "tg6";
           quantitat_targetes = true;
@@ -438,28 +485,33 @@ void entrar_productes() {
       }
     }
 
-    if (quantitat_targetes == true) {
-      int index = append(productes);
-      if (index != -1) {
-        productes[index] = nom_targeta;
-        Serial.println("Una " +  nom_targeta + " més");
-        nom_targeta = "";
+    if (quantitat_targetes == true) {   // si hi ha una targeta detectada
+      int index = append(productes);  // busca un índex buit amb la funció append creada abans
+      if (index != -1) {  // si hi ha un index disponible
+        productes[index] = nom_targeta; // afegeix la targeta a l'índex
+        Serial.println("Una " +  nom_targeta + " més"); // escriu-ho a les pantalles
+        lcd.setCursor(0, 1);
+        lcd.print(nom_targeta + " mes");
+        nom_targeta = "";   // actualitza les variables per poder repetir el mateix
         quantitat_targetes = false;
       }
-      else if (index == -1) {
-        Serial.println("No queda espai al magatzem");
-        aspress = false;
+      else if (index == -1) {   // si no hi ha un índex disponible
+        Serial.println("No queda espai al magatzem"); // escriu les pantalles
+        lcd.setCursor(0, 3);
+        lcd.print("No espai magatzem");
+        aspress = false;  // surt del loop
       }
     }
-    if (ir.decode(&results)) {
+    if (ir.decode(&results)) {  // si detecta una tecla del teclat
       if (results.value == 0xFFFFFFFF) {
         results.value = key;
       }
 
-      switch (results.value) {
+      switch (results.value) {  // si es la tecla vol+
         case 0xFF629D:
           // *
-          aspress = false;
+          lcd.clear(); // esborra les pantalles
+          aspress = false;  // surt del loop
           brunzidor();
           break;
         case 0xFFA25D:
@@ -468,46 +520,58 @@ void entrar_productes() {
           break;
 
       }
-      key = results.value;
+      key = results.value;  // reseteja els botons del teclat
       ir.resume();
     }
   }
 }
 
-void register_product(String name, int value) {
-  brunzidor();
+void register_product(String name, int value) {   // funció per vendre productes
+  brunzidor();  // crida la funció brunzidor
   delay(100);
   int i;
   int found = 0;
   if (calc_count = true) {
     for (i = 0; i < 13; i++) { // 13 numero d'elements a la llista
       if (productes[i] == name && found == 0) {
-        Serial.println(name);
-        productes[i] = "";
+        Serial.println(name);   // escriu a les pantalles el nom del producte i el preu
+        lcd.setCursor(0, 3);
+        lcd.print(name);
+        lcd2.clear();
+        lcd2.setCursor(0, 0);
+        lcd2.print(name);
+        lcd2.print("  ");
+        lcd2.print(value);
+        lcd2.print('E');
+        productes[i] = "";  // resetejar variables
         found ++;
-        preu_client += value;
+        preu_client += value;   
       }
     }
-    if (found == 0) {
-      calc_count = false;
-      Serial.println("no " + name + "left");
+    if (found == 0) {   // si no s'ha trobat el producte
+      calc_count = false;   // reset variables
+      Serial.println("no " + name + "left");  // escriu a les pantalles
+      lcd.setCursor(0, 3);
+      lcd.print("No queden " + name);
+      delay(2000);
+      lcd.clear();
     }
   }
 }
 
-void loop() {
-  if (aspress == true)
-    entrar_productes();
+void loop() {   // funció que s'executa tota l'estona
+  if (aspress == true)  // si la tecla d'entrar porductes esà seleccionada
+    entrar_productes(); // executa la funció d'entrar estoc
 
-  if (allow == true)
+  if (allow == true)  // si la variable allow es true, pots accedir al teclat
     keypadd();
 
-  if (mfrc522.PICC_IsNewCardPresent()) {
+  if (mfrc522.PICC_IsNewCardPresent()) {  // si es troba una targeta
     if (mfrc522.PICC_ReadCardSerial()) {
-      String uid = getID();
+      String uid = getID();   // troba id de la targeta
       uid = uid.substring(1);
       if (uid == "B9 6F E4 B2" && allow == true && aspress == false) { // producte J
-        register_product("tgJ", 2000);
+        register_product("tgJ", 2000);  // executa la funció registra producte
       }
 
       // targetes grup 1 (1-2)
@@ -540,16 +604,25 @@ void loop() {
         register_product("tg6", 600);
       }
 
-      if (uid == "BA 00 CF 81" && allow == true ) {
+      if (uid == "15 E7 7E F1" && allow == true ) {
         brunzidor1();
         //EEPROM.write(0, value);
-        Serial.println("Sesion closed");
-        allow = false;
+        Serial.println("Sesion closed");    // escrkj a les pantalles
+        lcd.clear();
+        lcd.setCursor(0, 1);
+        lcd.print("Fora treballador 1");
+        delay(2000);
+        lcd.clear();
+        allow = false;  // tanca la sessió del treballador/a
       }
-      else if (uid == "BA 00 CF 81" && allow == false ) {
+      else if (uid == "15 E7 7E F1" && allow == false ) {
         brunzidor1();
-        Serial.println("Staff member allowed");       // treballador
-        allow = true;
+        Serial.println("Staff member allowed");       // treballador 1
+        lcd.setCursor(0, 0);    // escriu a les pantalles
+        lcd.print("Treballador 1");
+        delay(2000);
+        lcd.clear();
+        allow = true;   // permet l'acces
       }
     }
   }
@@ -559,6 +632,7 @@ void loop() {
       2: 85 2E 80 F1
       3: A5 1F 80 F1
       4: A5 2F 80 F1
+      master: BA 00 CF 81
   */
 
 }
