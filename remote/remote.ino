@@ -15,7 +15,19 @@
    utilitzar eeprom
         config bé les targetes productes i debolucuins4
         config targeta master que pot accedir als registres
-   forma de representar els registres a les pantalles
+        forma de representar els registres a les pantalles
+  fer el registre excludiu per master
+  ficar euros en lloc de e
+  calaix funcions donar corrent a cable
+
+   possibilitats dels registres:
+   Com que la pantalla només es de 20x4, ho he d'avrebiar així
+   iniciar sessio -->  iniSes
+   tancar sessio --> tncSes )
+   entrar estoc --> estocD  (estoc fora)
+   vendre estoc --> estocF  (estoc dins)
+   ficar diners --> dinerD  (diners dins)
+   treure diners --> dinerF   (diners fora)
 
 */
 
@@ -61,17 +73,7 @@ int int_diners_client;  // diners client en int
 
 bool master = false; // si s'ha detectat la tarjeta master
 
-String registre[12][4] = {
-  {"t1", "100", "tancSes", "0"},
-  {"t2", "200" , "vendre" , "1"},
-  {"t1" , "855", "estocD" , "2"},
-  {"t1" , "852" , "tancSes", "3"},
-  {"t3" , "6" , "dinerF" , "4"},
-  {"t1", "5256", "inises" , "5"},
-  {"t1" , "8" , "dinerD" , "6"},
-  {"t4" , "98", "iniSes", "7"},
-  {"t1" , "100" , "iniSes", "8"}
-};
+String registre[12][4] = {};
 String treb = "";
 int id = 0;
 
@@ -230,7 +232,7 @@ void numeros_mando() {
           x = fila_registre();
           registre[x][0] = treb;
           registre[x][1] = value;
-          registre[x][2] = "comanda";
+          registre[x][2] = "estocF";
           registre[x][3] = id;
           row++;
           id++;
@@ -254,7 +256,7 @@ void print_reg() {
   key = results.value;
   ir.resume();
   Serial.println(pantalla);
-  
+
   Serial.println(registre[0][0] + ' ' + registre[0][1] + ' ' + registre[0][2] + ' ' + registre[0][3]);
   Serial.println(registre[1][0] + ' ' + registre[1][1] + ' ' + registre[1][2] + ' ' + registre[1][3]);
   Serial.println(registre[2][0] + ' ' + registre[2][1] + ' ' + registre[2][2] + ' ' + registre[2][3]);
@@ -272,36 +274,69 @@ void print_reg() {
   if (pantalla == 1) {
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print(registre[0][0] + ' ' + registre[0][1] + ' ' + registre[0][2] + ' ' + registre[0][3]);
+    lcd.print(registre[0][0] + ' ' + registre[0][1] + ' ' + registre[0][2]);
+    lcd.setCursor(18, 0);
+    lcd.print(registre[0][3]);
+
     lcd.setCursor(0, 1);
-    lcd.print(registre[1][0] + ' ' + registre[1][1] + ' ' + registre[1][2] + ' ' + registre[1][3]);
+    lcd.print(registre[1][0] + ' ' + registre[1][1] + ' ' + registre[1][2]);
+    lcd.setCursor(18, 1);
+    lcd.print(registre[1][3]);
+
     lcd.setCursor(0, 2);
-    lcd.print(registre[2][0] + ' ' + registre[2][1] + ' ' + registre[2][2] + ' ' + registre[2][3]);
+    lcd.print(registre[2][0] + ' ' + registre[2][1] + ' ' + registre[2][2]);
+    lcd.setCursor(18, 2);
+    lcd.print(registre[2][3]);
+
     lcd.setCursor(0, 3);
-    lcd.print(registre[3][0] + ' ' + registre[3][1] + ' ' + registre[3][2] + ' ' + registre[3][3]);
+    lcd.print(registre[3][0] + ' ' + registre[3][1] + ' ' + registre[3][2]);
+    lcd.setCursor(18, 3);
+    lcd.print(registre[3][3]);
   }
   else if (pantalla == 2) {
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print(registre[4][0] + ' ' + registre[4][1] + ' ' + registre[4][2] + ' ' + registre[4][3]);
+    lcd.print(registre[4][0] + ' ' + registre[4][1] + ' ' + registre[4][2]);
+    lcd.setCursor(18, 0);
+    lcd.print(registre[4][3]);
+
     lcd.setCursor(0, 1);
-    lcd.print(registre[5][0] + ' ' + registre[5][1] + ' ' + registre[5][2] + ' ' + registre[5][3]);
+    lcd.print(registre[5][0] + ' ' + registre[5][1] + ' ' + registre[5][2]);
+    lcd.setCursor(18, 1);
+    lcd.print(registre[5][3]);
+
     lcd.setCursor(0, 2);
-    lcd.print(registre[6][0] + ' ' + registre[6][1] + ' ' + registre[6][2] + ' ' + registre[6][3]);
+    lcd.print(registre[6][0] + ' ' + registre[6][1] + ' ' + registre[6][2]);
+    lcd.setCursor(18, 2);
+    lcd.print(registre[6][3]);
+
     lcd.setCursor(0, 3);
     lcd.print(registre[7][0] + ' ' + registre[7][1] + ' ' + registre[7][2] + ' ' + registre[7][3]);
+    lcd.setCursor(18, 3);
+    lcd.print(registre[7][3]);
   }
 
   else if (pantalla == 3) {
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print(registre[8][0] + ' ' + registre[8][1] + ' ' + registre[8][2] + ' ' + registre[8][3]);
+    lcd.print(registre[8][0] + ' ' + registre[8][1] + ' ' + registre[8][2]);
+    lcd.setCursor(18, 0);
+    lcd.print(registre[8][3]);
+
     lcd.setCursor(0, 1);
-    lcd.print(registre[9][0] + ' ' + registre[9][1] + ' ' + registre[9][2] + ' ' + registre[9][3]);
+    lcd.print(registre[9][0] + ' ' + registre[9][1] + ' ' + registre[9][2]);
+    lcd.setCursor(18, 1);
+    lcd.print(registre[9][3]);
+
     lcd.setCursor(0, 2);
     lcd.print(registre[10][0] + ' ' + registre[10][1] + ' ' + registre[10][2] + ' ' + registre[10][3]);
+    lcd.setCursor(18, 2);
+    lcd.print(registre[10][3]);
+
     lcd.setCursor(0, 3);
     lcd.print(registre[11][0] + ' ' + registre[11][1] + ' ' + registre[11][2] + ' ' + registre[7][3]);
+    lcd.setCursor(18, 3);
+    lcd.print(registre[7][3]);
   }
   while (pressed_master == true) {
     if (ir.decode(&results)) {
@@ -313,7 +348,6 @@ void print_reg() {
           // fletxa esquerra
           brunzidor();
           if (pantalla > 1) {
-            Serial.println("dins -");
             pantalla -= 1;
             print_reg();
           }
@@ -329,7 +363,6 @@ void print_reg() {
           // fletxa dreta
           brunzidor();
           if (pantalla < 3) {
-            Serial.println("dins +");
             pantalla += 1;
             lcd.clear();
             print_reg();
@@ -461,7 +494,7 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
         x = fila_registre();
         registre[x][0] = treb;
         registre[x][1] = value;
-        registre[x][2] = "sumar diners";
+        registre[x][2] = "dinerD";
         registre[x][3] = id;
         row++;
         id++;
@@ -482,7 +515,7 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
         x = fila_registre();
         registre[x][0] = treb;
         registre[x][1] = value;
-        registre[x][2] = "restar diners";
+        registre[x][2] = "dinerF";
         registre[x][3] = id;
         row++;
         id++;
@@ -500,7 +533,7 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
         x = fila_registre();
         registre[x][0] = treb;
         registre[x][1] = value;
-        registre[x][2] = "entrar estoc";
+        registre[x][2] = "estocD";
         registre[x][3] = id;
         row++;
         id++;
@@ -771,7 +804,7 @@ void loop() {   // funció que s'executa tota l'estona
         x = fila_registre();
         registre[x][0] = treb;
         registre[x][1] = value;
-        registre[x][2] = "tancar sessio";
+        registre[x][2] = "tncSes";
         registre[x][3] = id;
         row++;
         id++;
@@ -790,7 +823,7 @@ void loop() {   // funció que s'executa tota l'estona
         x = fila_registre();
         registre[x][0] = treb;
         registre[x][1] = value;
-        registre[x][2] = "iniciar sessio";
+        registre[x][2] = "iniSes";
         registre[x][3] = id;
         row++;
         id++;
@@ -810,7 +843,7 @@ void loop() {   // funció que s'executa tota l'estona
         x = fila_registre();
         registre[x][0] = treb;
         registre[x][1] = value;
-        registre[x][2] = "tancar sessio";
+        registre[x][2] = "tncSes";
         registre[x][3] = id;
         row++;
         id++;
@@ -829,7 +862,7 @@ void loop() {   // funció que s'executa tota l'estona
         x = fila_registre();
         registre[x][0] = treb;
         registre[x][1] = value;
-        registre[x][2] = "iniciar sessio";
+        registre[x][2] = "iniSes";
         registre[x][3] = id;
         row++;
         id++;
