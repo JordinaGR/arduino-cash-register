@@ -9,12 +9,12 @@
 /*
    Coses a fer:
 
-   afegir targetes treballadors
+        afegir targetes treballadors
         configurar pantalles
-   fer els registres i utilitzar eeprom
-   aconseguir registrar hora i dia
+        fer els registres
+   utilitzar eeprom
         config bé les targetes productes i debolucuins4
-   config targeta master que pot accedir als registres
+        config targeta master que pot accedir als registres
    forma de representar els registres a les pantalles
 
 */
@@ -61,7 +61,19 @@ int int_diners_client;  // diners client en int
 
 bool master = false; // si s'ha detectat la tarjeta master
 
-String registre[][3] = {};
+String registre[12][4] = {
+  {"t1", "100", "tancSes", "0"},
+  {"t2", "200" , "vendre" , "1"},
+  {"t1" , "855", "estocD" , "2"},
+  {"t1" , "852" , "tancSes", "3"},
+  {"t3" , "6" , "dinerF" , "4"},
+  {"t1", "5256", "inises" , "5"},
+  {"t1" , "8" , "dinerD" , "6"},
+  {"t4" , "98", "iniSes", "7"},
+  {"t1" , "100" , "iniSes", "8"}
+};
+String treb = "";
+int id = 0;
 
 void setup() {
   Serial.begin(9600); // inicialitzar el port i tots els objectes creats al inicii definir inputs i outputs
@@ -79,6 +91,17 @@ void setup() {
 
 }
 void(* resetFunc) (void) = 0; // funció per reiniciar el programa
+
+int row = 0;
+int fila_registre() {
+  if (row < 12) {
+    return row;
+  }
+  else if (row >= 12) {
+    row = 0;
+    return row;
+  }
+}
 
 // funcio perque soni el brunzidor un cop
 void brunzidor() {
@@ -203,6 +226,14 @@ void numeros_mando() {
           value += preu_client; // sumar els diners a la caixa
           preu_client = 0;  // reinicial les variables per a la proxima comanda
           comanda_oberta = false;
+          int x;
+          x = fila_registre();
+          registre[x][0] = treb;
+          registre[x][1] = value;
+          registre[x][2] = "comanda";
+          registre[x][3] = id;
+          row++;
+          id++;
           key = results.value;
           ir.resume();
           break;
@@ -217,9 +248,108 @@ void numeros_mando() {
     }
   }
 }
+bool pressed_master;
+int pantalla;
+void print_reg() {
+  key = results.value;
+  ir.resume();
+  Serial.println(pantalla);
+  
+  Serial.println(registre[0][0] + ' ' + registre[0][1] + ' ' + registre[0][2] + ' ' + registre[0][3]);
+  Serial.println(registre[1][0] + ' ' + registre[1][1] + ' ' + registre[1][2] + ' ' + registre[1][3]);
+  Serial.println(registre[2][0] + ' ' + registre[2][1] + ' ' + registre[2][2] + ' ' + registre[2][3]);
+  Serial.println(registre[3][0] + ' ' + registre[3][1] + ' ' + registre[3][2] + ' ' + registre[3][3]);
+
+  Serial.println(registre[4][0] + ' ' + registre[4][1] + ' ' + registre[4][2] + ' ' + registre[4][3]);
+  Serial.println(registre[5][0] + ' ' + registre[5][1] + ' ' + registre[5][2] + ' ' + registre[5][3]);
+  Serial.println(registre[6][0] + ' ' + registre[6][1] + ' ' + registre[6][2] + ' ' + registre[6][3]);
+  Serial.println(registre[7][0] + ' ' + registre[7][1] + ' ' + registre[7][2] + ' ' + registre[7][3]);
+
+  Serial.println(registre[8][0] + ' ' + registre[8][1] + ' ' + registre[8][2] + ' ' + registre[8][3]);
+  Serial.println(registre[9][0] + ' ' + registre[9][1] + ' ' + registre[9][2] + ' ' + registre[9][3]);
+  Serial.println(registre[10][0] + ' ' + registre[10][1] + ' ' + registre[10][2] + ' ' + registre[10][3]);
+  Serial.println(registre[11][0] + ' ' + registre[00][1] + ' ' + registre[11][2] + ' ' + registre[11][3]);
+  if (pantalla == 1) {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print(registre[0][0] + ' ' + registre[0][1] + ' ' + registre[0][2] + ' ' + registre[0][3]);
+    lcd.setCursor(0, 1);
+    lcd.print(registre[1][0] + ' ' + registre[1][1] + ' ' + registre[1][2] + ' ' + registre[1][3]);
+    lcd.setCursor(0, 2);
+    lcd.print(registre[2][0] + ' ' + registre[2][1] + ' ' + registre[2][2] + ' ' + registre[2][3]);
+    lcd.setCursor(0, 3);
+    lcd.print(registre[3][0] + ' ' + registre[3][1] + ' ' + registre[3][2] + ' ' + registre[3][3]);
+  }
+  else if (pantalla == 2) {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print(registre[4][0] + ' ' + registre[4][1] + ' ' + registre[4][2] + ' ' + registre[4][3]);
+    lcd.setCursor(0, 1);
+    lcd.print(registre[5][0] + ' ' + registre[5][1] + ' ' + registre[5][2] + ' ' + registre[5][3]);
+    lcd.setCursor(0, 2);
+    lcd.print(registre[6][0] + ' ' + registre[6][1] + ' ' + registre[6][2] + ' ' + registre[6][3]);
+    lcd.setCursor(0, 3);
+    lcd.print(registre[7][0] + ' ' + registre[7][1] + ' ' + registre[7][2] + ' ' + registre[7][3]);
+  }
+
+  else if (pantalla == 3) {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print(registre[8][0] + ' ' + registre[8][1] + ' ' + registre[8][2] + ' ' + registre[8][3]);
+    lcd.setCursor(0, 1);
+    lcd.print(registre[9][0] + ' ' + registre[9][1] + ' ' + registre[9][2] + ' ' + registre[9][3]);
+    lcd.setCursor(0, 2);
+    lcd.print(registre[10][0] + ' ' + registre[10][1] + ' ' + registre[10][2] + ' ' + registre[10][3]);
+    lcd.setCursor(0, 3);
+    lcd.print(registre[11][0] + ' ' + registre[11][1] + ' ' + registre[11][2] + ' ' + registre[7][3]);
+  }
+  while (pressed_master == true) {
+    if (ir.decode(&results)) {
+      if (results.value == 0xFFFFFFFF) {
+        results.value = key;
+      }
+      switch (results.value) {
+        case 0xFF22DD:
+          // fletxa esquerra
+          brunzidor();
+          if (pantalla > 1) {
+            Serial.println("dins -");
+            pantalla -= 1;
+            print_reg();
+          }
+          break;
+
+        case 0xFF02FD:
+          // play-pause
+          brunzidor();
+          lcd.clear();
+          pressed_master = false;
+          break;
+        case 0xFFC23D:
+          // fletxa dreta
+          brunzidor();
+          if (pantalla < 3) {
+            Serial.println("dins +");
+            pantalla += 1;
+            lcd.clear();
+            print_reg();
+          }
+          break;
+        case 0xFFA25D:
+          // boto vermell
+          resetFunc();
+          break;
+      }
+      key = results.value;
+      ir.resume();
+    }
+  }
+}
+
 
 bool func_stop = false; // definir una variable per saber si la comanda està començada o no
 void keypadd() {  // funció per detectar la tecla que està seleccionada
+  int x;
   if (ir.decode(&results)) {
     if (results.value == 0xFFFFFFFF) {
       results.value = key;
@@ -292,7 +422,7 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
       case 0xFFB04F:
         // st/rept acabar comanda
         brunzidor();
-        Serial.println(preu_client);  // escriure a les pantalles 
+        Serial.println(preu_client);  // escriure a les pantalles
         lcd.clear();
         lcd2.clear();
         lcd2.setCursor(0, 0);
@@ -308,7 +438,7 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
         lcd.print("Paga el client ");
         delay(100);
         key = results.value;
-        ir.resume();  
+        ir.resume();
         numeros_mando();  // anar a la funció numeros_mando
         break;
 
@@ -328,6 +458,13 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
         numbers = ""; // reiniciar la variable
         Serial.println(); // escriure a les pantalles
         Serial.println(value);
+        x = fila_registre();
+        registre[x][0] = treb;
+        registre[x][1] = value;
+        registre[x][2] = "sumar diners";
+        registre[x][3] = id;
+        row++;
+        id++;
         lcd.clear();
         lcd.setCursor(16, 0);
         lcd.print(value);
@@ -336,23 +473,37 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
 
       case 0xFF906F:
         // fletxa amunt - restar - el mateix que l'anterior però restant
+        brunzidor();
         int_num = numbers.toInt();
         value -= int_num;
         numbers = "";
         Serial.println();
         Serial.println(value);
+        x = fila_registre();
+        registre[x][0] = treb;
+        registre[x][1] = value;
+        registre[x][2] = "restar diners";
+        registre[x][3] = id;
+        row++;
+        id++;
         lcd.clear();
         lcd.setCursor(16, 0);
         lcd.print(value);
-        brunzidor();
         break;
 
       case 0xFF629D:
-        // volum + entrar stok - anar a la funció d'entrar estoc
+        // volum + entrar estoc - anar a la funció d'entrar estoc
         brunzidor();
         aspress = true;
         lcd.setCursor(0, 0);
         lcd.print("Entrant estoc");
+        x = fila_registre();
+        registre[x][0] = treb;
+        registre[x][1] = value;
+        registre[x][2] = "entrar estoc";
+        registre[x][3] = id;
+        row++;
+        id++;
         entrar_productes();
         lcd.clear();
         break;
@@ -384,6 +535,10 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
 
       case 0xFF02FD:
         // play-pause
+        brunzidor();
+        pressed_master = true;
+        pantalla = 1;
+        print_reg();
         break;
       case 0xFFC23D:
         // fletxa dreta
@@ -410,7 +565,7 @@ String getID() {  // funció per obtenir l'ID de les targetes
   return id;
 }
 
-int append(String *arr) { // funció per trobar un espai buit a l'array passat com a argument, aquesta retorna un índex
+int append(String * arr) { // funció per trobar un espai buit a l'array passat com a argument, aquesta retorna un índex
   int i;
   for (i = 0; i < 13; i++) {  // loop que itera per tots els elements de l'array fins que hi ha una condició que fa que pari
     if (arr[i] == "") {
@@ -438,7 +593,7 @@ void entrar_productes() {   // funció per afegir productes a l'estoc
         if (uid == "B9 6F E4 B2" && allow == true && quantitat_targetes == false) { // producte J
           brunzidor();  // fes la funció brunzidor
           nom_targeta = "tgJ";  // actualitza la variable nom_targeta i quantitat_targeta
-          quantitat_targetes = true;  
+          quantitat_targetes = true;
         }
 
         // targetes grup 1 (1-2)
@@ -545,7 +700,7 @@ void register_product(String name, int value) {   // funció per vendre producte
         lcd2.print('E');
         productes[i] = "";  // resetejar variables
         found ++;
-        preu_client += value;   
+        preu_client += value;
       }
     }
     if (found == 0) {   // si no s'ha trobat el producte
@@ -560,6 +715,7 @@ void register_product(String name, int value) {   // funció per vendre producte
 }
 
 void loop() {   // funció que s'executa tota l'estona
+  int x;
   if (aspress == true)  // si la tecla d'entrar porductes esà seleccionada
     entrar_productes(); // executa la funció d'entrar estoc
 
@@ -604,22 +760,196 @@ void loop() {   // funció que s'executa tota l'estona
         register_product("tg6", 600);
       }
 
-      if (uid == "15 E7 7E F1" && allow == true ) {
+      // treballador 1 tancar sessió
+      if (uid == "15 E7 7E F1" && allow == true && treb == "t1") {
         brunzidor1();
         //EEPROM.write(0, value);
         Serial.println("Sesion closed");    // escrkj a les pantalles
         lcd.clear();
         lcd.setCursor(0, 1);
         lcd.print("Fora treballador 1");
+        x = fila_registre();
+        registre[x][0] = treb;
+        registre[x][1] = value;
+        registre[x][2] = "tancar sessio";
+        registre[x][3] = id;
+        row++;
+        id++;
+        treb = "";
         delay(2000);
         lcd.clear();
         allow = false;  // tanca la sessió del treballador/a
       }
+      // iniciar sessió treballador 1
       else if (uid == "15 E7 7E F1" && allow == false ) {
         brunzidor1();
         Serial.println("Staff member allowed");       // treballador 1
         lcd.setCursor(0, 0);    // escriu a les pantalles
         lcd.print("Treballador 1");
+        treb = "t1";
+        x = fila_registre();
+        registre[x][0] = treb;
+        registre[x][1] = value;
+        registre[x][2] = "iniciar sessio";
+        registre[x][3] = id;
+        row++;
+        id++;
+        delay(2000);
+        lcd.clear();
+        allow = true;   // permet l'acces
+      }
+
+      // tancar sessió treballador 2
+      if (uid == "85 2E 80 F1" && allow == true && treb == "t2") {
+        brunzidor1();
+        //EEPROM.write(0, value);
+        Serial.println("Sesion closed");    // escrkj a les pantalles
+        lcd.clear();
+        lcd.setCursor(0, 1);
+        lcd.print("Fora treballador 2");
+        x = fila_registre();
+        registre[x][0] = treb;
+        registre[x][1] = value;
+        registre[x][2] = "tancar sessio";
+        registre[x][3] = id;
+        row++;
+        id++;
+        treb = "";
+        delay(2000);
+        lcd.clear();
+        allow = false;  // tanca la sessió del treballador/a
+      }
+      // iniciar sessió treballador 2
+      else if (uid == "85 2E 80 F1" && allow == false ) {
+        brunzidor1();
+        Serial.println("Staff member allowed");       // treballador 1
+        lcd.setCursor(0, 0);    // escriu a les pantalles
+        lcd.print("Treballador 2");
+        treb = "t2";
+        x = fila_registre();
+        registre[x][0] = treb;
+        registre[x][1] = value;
+        registre[x][2] = "iniciar sessio";
+        registre[x][3] = id;
+        row++;
+        id++;
+        delay(2000);
+        lcd.clear();
+        allow = true;   // permet l'acces
+      }
+      // tancar sesió master
+      if (uid == "BA 00 CF 81" && allow == true && treb == "m") {
+        brunzidor1();
+        master = false;
+        //EEPROM.write(0, value);
+        Serial.println("Sesion closed");    // escrkj a les pantalles
+        lcd.clear();
+        lcd.setCursor(0, 1);
+        lcd.print("Fora master");
+        x = fila_registre();
+        registre[x][0] = treb;
+        registre[x][1] = value;
+        registre[x][2] = "tncSes";
+        registre[x][3] = id;
+        row++;
+        id++;
+        treb = "";
+        delay(2000);
+        lcd.clear();
+        allow = false;  // tanca la sessió del treballador/a
+      }
+      // inicia sessió master
+      else if (uid == "BA 00 CF 81" && allow == false ) {
+        brunzidor1();
+        master = true;
+        Serial.println("master allowed");       // treballador 1
+        lcd.setCursor(0, 0);    // escriu a les pantalles
+        lcd.print("Master");
+        treb = "m";
+        x = fila_registre();
+        registre[x][0] = treb;
+        registre[x][1] = value;
+        registre[x][2] = "iniSes";
+        registre[x][3] = id;
+        row++;
+        id++;
+        delay(2000);
+        lcd.clear();
+        allow = true;   // permet l'acces
+      }
+      // tancar sessió treballador 3
+      if (uid == "A5 1F 80 F1" && allow == true && treb == "t3") {
+        brunzidor1();
+        //EEPROM.write(0, value);
+        Serial.println("Sesion closed");    // escrkj a les pantalles
+        lcd.clear();
+        lcd.setCursor(0, 1);
+        lcd.print("Fora treballador 3");
+        x = fila_registre();
+        registre[x][0] = treb;
+        registre[x][1] = value;
+        registre[x][2] = "tncSes";
+        registre[x][3] = id;
+        row++;
+        id++;
+        treb = "";
+        delay(2000);
+        lcd.clear();
+        allow = false;  // tanca la sessió del treballador/a
+      }
+      // inicia sessió treballador 3
+      else if (uid == "A5 1F 80 F1" && allow == false ) {
+        brunzidor1();
+        Serial.println("treballador 3 allowed");       // treballador 1
+        lcd.setCursor(0, 0);    // escriu a les pantalles
+        lcd.print("Treballador 3");
+        treb = "t3";
+        x = fila_registre();
+        registre[x][0] = treb;
+        registre[x][1] = value;
+        registre[x][2] = "iniSes";
+        registre[x][3] = id;
+        row++;
+        id++;
+        delay(2000);
+        lcd.clear();
+        allow = true;   // permet l'acces
+      }
+
+      // tancar sessió treballador 4
+      if (uid == "A5 2F 80 F1" && allow == true && treb == "t4") {
+        brunzidor1();
+        //EEPROM.write(0, value);
+        Serial.println("Sesion closed");    // escru a les pantalles
+        lcd.clear();
+        lcd.setCursor(0, 1);
+        lcd.print("Fora treballador 4");
+        x = fila_registre();
+        registre[x][0] = treb;
+        registre[x][1] = value;
+        registre[x][2] = "tncSes";
+        registre[x][3] = id;
+        row++;
+        id++;
+        treb = "";
+        delay(2000);
+        lcd.clear();
+        allow = false;  // tanca la sessió del treballador/a
+      }
+      // inicia sessió treballador 4
+      else if (uid == "A5 2F 80 F1" && allow == false ) {
+        brunzidor1();
+        Serial.println("treballador 4 allowed");       // treballador 1
+        lcd.setCursor(0, 0);    // escriu a les pantalles
+        lcd.print("Treballador 4");
+        treb = "t4";
+        x = fila_registre();
+        registre[x][0] = treb;
+        registre[x][1] = value;
+        registre[x][2] = "iniSes";
+        registre[x][3] = id;
+        row++;
+        id++;
         delay(2000);
         lcd.clear();
         allow = true;   // permet l'acces
