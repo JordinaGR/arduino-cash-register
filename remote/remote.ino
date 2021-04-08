@@ -812,37 +812,37 @@ void loop() {   // funció que s'executa tota l'estona
       String uid = getID();   // troba id de la targeta
       uid = uid.substring(1);
       if (uid == "B9 6F E4 B2" && allow == true && aspress == false) { // producte J
-        register_product("tgJ", 2000);  // executa la funció registra producte
+        register_product("tgJ", 119);  // executa la funció registra producte
       }
 
       // targetes grup 1 (1-2)
       if ((uid == "5A FE 0B 7B" || uid == "E9 A2 0C 7B") && allow == true && aspress == false) { // producte
-        register_product("tg1", 100);
+        register_product("tg1", 19);
       }
 
       // targetes grup 2 (3-4)
       if ((uid == "B5 55 0C 7B" || uid == "9B 52 12 7B") && allow == true && aspress == false) { // producte
-        register_product("tg2", 200);
+        register_product("tg2", 24);
       }
 
       // targetes grup 3 (5-6)
       if ((uid == "A6 00 0D 7B" || uid == "A2 76 12 7B") && allow == true && aspress == false) { // producte
-        register_product("tg3", 300);
+        register_product("tg3", 34);
       }
 
       // targetes grup 4 (7-8)
       if ((uid == "A0 22 12 7B" || uid == "27 41 0C 7B") && allow == true && aspress == false) { // producte
-        register_product("tg4", 400);
+        register_product("tg4", 49);
       }
 
       // targetes grup 5 (9 - 10)
       if ((uid == "95 DB 0B 7B" || uid == "37 02 0D 7B") && allow == true && aspress == false) { // producte
-        register_product("tg5", 500);
+        register_product("tg5", 69);
       }
 
       // targetes grup 6 (11 - 12)
       if ((uid == "D5 D0 0B 7B" || uid == "99 6D 0C 7B") && allow == true && aspress == false) { // producte
-        register_product("tg6", 600);
+        register_product("tg6", 99);
       }
       // master tanqui sessió si qualsevol altre targeta està ficada i inicii la del master
       if (uid == "BA 00 CF 81" && allow == true && treb != "m") {
