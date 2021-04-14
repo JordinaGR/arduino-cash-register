@@ -196,6 +196,10 @@ void numeros_mando() {
           delay(100);
           lcd.clear();  // escriure a les pantalles
           lcd2.clear();
+          lcd.setCursor(0,0);
+          lcd.print("Canvi ");
+          lcd2.setCursor(0,0);
+          lcd2.print("Canvi ");
           lcd2.setCursor(0, 1);
           lcd2.print(int_diners_client - preu_client);
           lcd2.print(" Euros");
@@ -219,6 +223,18 @@ void numeros_mando() {
           id++;
           key = results.value;
           ir.resume();
+          break;
+
+        case 0xFF9867:
+          // EQ/esbrrar
+          // essborrar el que hi ha escrit fins ara de la variable i de la pantalla
+          diners_client = "";
+          int i;
+          for (i = 0; i < 5; i++) {
+            lcd.setCursor(i, 1);
+            lcd.print(' ');
+          }
+          brunzidor();
           break;
 
         case 0xFFA25D:
@@ -457,7 +473,6 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
           lcd.setCursor(i, 0);
           lcd.print(' ');
         }
-
         brunzidor();
         break;
 
@@ -489,7 +504,6 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
         brunzidor();
         Serial.println();
         Serial.println(value);
-
         lcd.clear();
         lcd.setCursor(1, 0);
         lcd.print("Diners ");
@@ -523,9 +537,20 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
         row++;
         id++;
         lcd.clear();
-        lcd.setCursor(16, 0);
+        lcd.setCursor(1, 0);
+        lcd.print("Diners ");
         lcd.print(value);
-        delay(1500);
+        lcd.setCursor(13, 0);
+        lcd.print("Euros");
+        lcd.setCursor(1, 1);
+        lcd.print("Treballador ");
+        if (treb == "m") {
+          lcd.print(treb);
+        }
+        else {
+          lcd.print(treb[1]);
+        }
+        delay(3000);
         lcd.clear();
         brunzidor();
         break;
@@ -546,9 +571,20 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
         row++;
         id++;
         lcd.clear();
-        lcd.setCursor(16, 0);
+        lcd.setCursor(1, 0);
+        lcd.print("Diners ");
         lcd.print(value);
-        delay(1500);
+        lcd.setCursor(13, 0);
+        lcd.print("Euros");
+        lcd.setCursor(1, 1);
+        lcd.print("Treballador ");
+        if (treb == "m") {
+          lcd.print(treb);
+        }
+        else {
+          lcd.print(treb[1]);
+        }
+        delay(3000);
         lcd.clear();
         break;
 
@@ -894,6 +930,7 @@ void dili() { // dili dili dili dili dili dili dili dili dili dili dili dili dil
           ir.resume();
           delay(200);
           lcd.clear();
+          lcd2.clear();
           taraco = false;
           break;
         case 0xFFA25D:
