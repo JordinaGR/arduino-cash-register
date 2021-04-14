@@ -52,16 +52,12 @@ String registre[16][4] = {};
 String treb = "";
 int id = 0;
 
-// cable per obrir i tancar caixa
-int caixa = 4;
-
 void setup() {
   Serial.begin(9600); // inicialitzar el port i tots els objectes creats al inicii definir inputs i outputs
   Serial.println("asdf");
   SPI.begin();
   value = (EEPROM.read(0) << 8) + EEPROM.read(1);
   pinMode(buzzer, OUTPUT);
-  pinMode(caixa, OUTPUT);
   mfrc522.PCD_Init();
   ir.enableIRIn(); // Start the receiver
   lcd.begin();
@@ -89,12 +85,6 @@ void brunzidor() {
   delay(200);
   digitalWrite(buzzer, LOW);
   delay(200);
-}
-
-void obrir_caixa() {
-  digitalWrite(caixa, HIGH);
-  delay(500);
-  digitalWrite(caixa, LOW);
 }
 
 // funció perque soni el brunzidor diversos cops per les tarjetes
@@ -209,7 +199,6 @@ void numeros_mando() {
           delay(4000);
           lcd.clear();
           lcd2.clear();
-          obrir_caixa();
           value += preu_client; // sumar els diners a la caixa
           preu_client = 0;  // reinicial les variables per a la proxima comanda
           diners_client = "";
@@ -491,11 +480,26 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
 
       case 0xFFA857:
         // volum menys - escriure el valanç de la caixa
+        brunzidor();
         Serial.println();
         Serial.println(value);
-        lcd.setCursor(16, 0);
+
+        lcd.clear();
+        lcd.setCursor(1, 0);
+        lcd.print("Diners ");
         lcd.print(value);
-        brunzidor();
+        lcd.setCursor(13, 0);
+        lcd.print("Euros");
+        lcd.setCursor(1, 1);
+        lcd.print("treballador ");
+        if (treb == "m") {
+          lcd.print(treb);
+        }
+        else {
+          lcd.print(treb[1]);
+        }
+        delay(3000);
+        lcd.clear();
         break;
 
       case 0xFFE01F:
@@ -505,7 +509,6 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
         numbers = ""; // reiniciar la variable
         Serial.println(); // escriure a les pantalles
         Serial.println(value);
-        obrir_caixa();
         x = fila_registre();
         registre[x][0] = treb;
         registre[x][1] = value;
@@ -516,6 +519,8 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
         lcd.clear();
         lcd.setCursor(16, 0);
         lcd.print(value);
+        delay(1500);
+        lcd.clear();
         brunzidor();
         break;
 
@@ -527,7 +532,6 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
         numbers = "";
         Serial.println();
         Serial.println(value);
-        obrir_caixa();
         x = fila_registre();
         registre[x][0] = treb;
         registre[x][1] = value;
@@ -538,6 +542,8 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
         lcd.clear();
         lcd.setCursor(16, 0);
         lcd.print(value);
+        delay(1500);
+        lcd.clear();
         break;
 
       case 0xFF629D:
@@ -554,6 +560,10 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
         row++;
         id++;
         entrar_productes();
+        lcd.clear();
+        lcd.setCursor(0, 1);
+        lcd.print("Estoc entrat");
+        delay(2000);
         lcd.clear();
         break;
 
@@ -582,7 +592,6 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
         // fletxa esquerra
         if (master == true) {
           brunzidor();
-          obrir_caixa();
         }
         break;
 
@@ -596,7 +605,7 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
         }
         break;
       case 0xFFC23D:
-        // fletxa dreta
+        // fletxa dreta quin treballador
         break;
       case 0xFFA25D:
         // boto vermell
@@ -701,7 +710,7 @@ void entrar_productes() {   // funció per afegir productes a l'estoc
         productes[index] = nom_targeta; // afegeix la targeta a l'índex
         Serial.println("Una " +  nom_targeta + " més"); // escriu-ho a les pantalles
         lcd.setCursor(0, 1);
-        lcd.print(nom_targeta + " mes");
+        lcd.print(nom_targeta + " afegida");
         nom_targeta = "";   // actualitza les variables per poder repetir el mateix
         quantitat_targetes = false;
       }
@@ -751,14 +760,14 @@ void register_product(String name, int value) {   // funció per vendre producte
         lcd.clear();
         lcd.setCursor(0, 2);
         lcd.print(barcelona);
-        lcd.setCursor(0,3);
+        lcd.setCursor(0, 3);
         lcd.print(value);
         lcd.print(" Euros");
         lcd2.clear();
         lcd2.setCursor(0, 0);
         lcd2.print(barcelona);
         lcd2.print("  ");
-        lcd2.setCursor(0,1);
+        lcd2.setCursor(0, 1);
         lcd2.print(value);
         lcd2.print(" Euros");
         productes[i] = "";  // resetejar variables
@@ -789,64 +798,56 @@ void loop() {   // funció que s'executa tota l'estona
       String uid = getID();   // troba id de la targeta
       uid = uid.substring(1);
       if (uid == "B9 6F E4 B2" && allow == true && aspress == false) { // producte J
-        barcelona = "Pq.8 calc";
+        barcelona = "c. calculadores";
         register_product("tgJ", 119);  // executa la funció registra producte
-
       }
 
       // targetes grup 1 (1-2)
       if ((uid == "5A FE 0B 7B" || uid == "E9 A2 0C 7B") && allow == true && aspress == false) { // producte
-        barcelona = "";
         barcelona = "caixa gomes";
         register_product("tg1", 19);
-
       }
 
       // targetes grup 2 (3-4)
       if ((uid == "B5 55 0C 7B" || uid == "9B 52 12 7B") && allow == true && aspress == false) { // producte
-        barcelona = "";
         barcelona = "caixa llapis";
         register_product("tg2", 24);
-
       }
 
       // targetes grup 3 (5-6)
       if ((uid == "A6 00 0D 7B" || uid == "A2 76 12 7B") && allow == true && aspress == false) { // producte
-        barcelona = "";
         barcelona = "caixa fulls";
         register_product("tg3", 34);
-
       }
 
       // targetes grup 4 (7-8)
       if ((uid == "A0 22 12 7B" || uid == "27 41 0C 7B") && allow == true && aspress == false) { // producte
-        barcelona = "";
         barcelona = "bolis 4col";
         register_product("tg4", 49);
-
       }
 
       // targetes grup 5 (9 - 10)
       if ((uid == "95 DB 0B 7B" || uid == "37 02 0D 7B") && allow == true && aspress == false) { // producte
-        barcelona = "";
         barcelona = "caixa tisores";
         register_product("tg5", 69);
-
       }
 
       // targetes grup 6 (11 - 12)
       if ((uid == "D5 D0 0B 7B" || uid == "99 6D 0C 7B") && allow == true && aspress == false) { // producte
-        barcelona = "";
         barcelona = "caixa llibretes";
         register_product("tg6", 99);
-
       }
+
       // master tanqui sessió si qualsevol altre targeta està ficada i inicii la del master
       if (uid == "BA 00 CF 81" && allow == true && treb != "m") {
         brunzidor1();
         lcd.clear();
         lcd.setCursor(0, 1);
-        lcd.print("no t4 i si master");
+        lcd.print("SURT TREBALLADOR ");
+        lcd.print('T');
+        lcd.print(treb[1]);
+        lcd.setCursor(0, 2);
+        lcd.print("ENTRA MASTER");
         x = fila_registre();
         registre[x][0] = treb;
         registre[x][1] = value;
@@ -874,7 +875,7 @@ void loop() {   // funció que s'executa tota l'estona
         Serial.println("Sesion closed");    // escrkj a les pantalles
         lcd.clear();
         lcd.setCursor(0, 1);
-        lcd.print("Fora treballador 1");
+        lcd.print("SURT TREBALLADOR 1");
         x = fila_registre();
         registre[x][0] = treb;
         registre[x][1] = value;
@@ -891,8 +892,8 @@ void loop() {   // funció que s'executa tota l'estona
       else if (uid == "15 E7 7E F1" && allow == false ) {
         brunzidor1();
         Serial.println("Staff member allowed");       // treballador 1
-        lcd.setCursor(0, 0);    // escriu a les pantalles
-        lcd.print("Treballador 1");
+        lcd.setCursor(0, 1);    // escriu a les pantalles
+        lcd.print("ENTRA TREBALLADOR 1");
         treb = "t1";
         x = fila_registre();
         registre[x][0] = treb;
@@ -914,7 +915,7 @@ void loop() {   // funció que s'executa tota l'estona
         Serial.println("Sesion closed");    // escrkj a les pantalles
         lcd.clear();
         lcd.setCursor(0, 1);
-        lcd.print("Fora treballador 2");
+        lcd.print("SURT TREBALLADOR 2");
         x = fila_registre();
         registre[x][0] = treb;
         registre[x][1] = value;
@@ -931,8 +932,8 @@ void loop() {   // funció que s'executa tota l'estona
       else if (uid == "85 2E 80 F1" && allow == false ) {
         brunzidor1();
         Serial.println("Staff member allowed");       // treballador 1
-        lcd.setCursor(0, 0);    // escriu a les pantalles
-        lcd.print("Treballador 2");
+        lcd.setCursor(0, 1);    // escriu a les pantalles
+        lcd.print("ENTRA TREBALLADOR 2");
         treb = "t2";
         x = fila_registre();
         registre[x][0] = treb;
@@ -954,7 +955,7 @@ void loop() {   // funció que s'executa tota l'estona
         Serial.println("Sesion closed");    // escrkj a les pantalles
         lcd.clear();
         lcd.setCursor(0, 1);
-        lcd.print("Fora master");
+        lcd.print("SURT MASTER");
         x = fila_registre();
         registre[x][0] = treb;
         registre[x][1] = value;
@@ -972,8 +973,8 @@ void loop() {   // funció que s'executa tota l'estona
         brunzidor1();
         master = true;
         Serial.println("master allowed");       // treballador 1
-        lcd.setCursor(0, 0);    // escriu a les pantalles
-        lcd.print("Master");
+        lcd.setCursor(0, 1);    // escriu a les pantalles
+        lcd.print("ENTRA MASTER");
         treb = "m";
         x = fila_registre();
         registre[x][0] = treb;
@@ -994,7 +995,7 @@ void loop() {   // funció que s'executa tota l'estona
         Serial.println("Sesion closed");    // escrkj a les pantalles
         lcd.clear();
         lcd.setCursor(0, 1);
-        lcd.print("Fora treballador 3");
+        lcd.print("SURT TREBALLADOR 3");
         x = fila_registre();
         registre[x][0] = treb;
         registre[x][1] = value;
@@ -1011,8 +1012,8 @@ void loop() {   // funció que s'executa tota l'estona
       else if (uid == "A5 1F 80 F1" && allow == false ) {
         brunzidor1();
         Serial.println("treballador 3 allowed");       // treballador 1
-        lcd.setCursor(0, 0);    // escriu a les pantalles
-        lcd.print("Treballador 3");
+        lcd.setCursor(0, 1);    // escriu a les pantalles
+        lcd.print("ENTRA TREBALLADOR 3");
         treb = "t3";
         x = fila_registre();
         registre[x][0] = treb;
@@ -1034,7 +1035,7 @@ void loop() {   // funció que s'executa tota l'estona
         Serial.println("Sesion closed");    // escru a les pantalles
         lcd.clear();
         lcd.setCursor(0, 1);
-        lcd.print("Fora treballador 4");
+        lcd.print("SURT TREBALLADOR 4");
         x = fila_registre();
         registre[x][0] = treb;
         registre[x][1] = value;
@@ -1051,8 +1052,8 @@ void loop() {   // funció que s'executa tota l'estona
       else if (uid == "A5 2F 80 F1" && allow == false ) {
         brunzidor1();
         Serial.println("treballador 4 allowed");       // treballador 1
-        lcd.setCursor(0, 0);    // escriu a les pantalles
-        lcd.print("Treballador 4");
+        lcd.setCursor(0, 1);    // escriu a les pantalles
+        lcd.print("ENTRA TREBALLADOR 4");
         treb = "t4";
         x = fila_registre();
         registre[x][0] = treb;
