@@ -52,6 +52,9 @@ String registre[16][4] = {};
 String treb = "";
 int id = 0;
 
+String nname;
+int vv;
+
 void setup() {
   Serial.begin(9600); // inicialitzar el port i tots els objectes creats al inicii definir inputs i outputs
   Serial.println("asdf");
@@ -67,6 +70,9 @@ void setup() {
 
 }
 void(* resetFunc) (void) = 0; // funció per reiniciar el programa
+
+
+bool taraco = true;
 
 int row = 0;
 int fila_registre() {
@@ -491,7 +497,7 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
         lcd.setCursor(13, 0);
         lcd.print("Euros");
         lcd.setCursor(1, 1);
-        lcd.print("treballador ");
+        lcd.print("Treballador ");
         if (treb == "m") {
           lcd.print(treb);
         }
@@ -605,7 +611,11 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
         }
         break;
       case 0xFFC23D:
-        // fletxa dreta quin treballador
+        // fletxa dreta mirar productes
+        brunzidor();
+        Serial.print("fletxa dreta");
+        taraco = true;
+        dili();
         break;
       case 0xFFA25D:
         // boto vermell
@@ -785,6 +795,117 @@ void register_product(String name, int value) {   // funció per vendre producte
     }
   }
 }
+
+
+void timor(String name, int value, String barcelona) {
+  Serial.println(barcelona);   // escriu a les pantalles el nom del producte i el preu
+  lcd.clear();
+  lcd.setCursor(0, 2);
+  lcd.print(barcelona);
+  lcd.setCursor(0, 3);
+  lcd.print(value);
+  lcd.print(" Euros");
+  lcd2.clear();
+  lcd2.setCursor(0, 0);
+  lcd2.print(barcelona);
+  lcd2.print("  ");
+  lcd2.setCursor(0, 1);
+  lcd2.print(value);
+  lcd2.print(" Euros");
+}
+
+void dili() { // dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili
+  delay(100);
+  key = results.value;  // reseteja els botons del teclat
+  ir.resume();
+  delay(200);
+  while (taraco == true) {
+    Serial.println("dins while");
+    if (mfrc522.PICC_IsNewCardPresent()) {  // si es troba una targeta
+      if (mfrc522.PICC_ReadCardSerial()) {
+        String uid = getID();   // troba id de la targeta
+        uid = uid.substring(1);
+        if (uid == "B9 6F E4 B2" && allow == true && aspress == false) { // producte J
+          barcelona = "c. calculadores";
+          nname = "tgJ";
+          vv = 119;
+          timor(nname, vv, barcelona);  // executa la funció registra producte
+        }
+        // targetes grup 1 (1-2)
+        if ((uid == "5A FE 0B 7B" || uid == "E9 A2 0C 7B") && allow == true && aspress == false) { // producte
+          barcelona = "caixa gomes";
+          nname = "tg1";
+          vv = 19;
+          timor(nname, vv, barcelona);
+        }
+
+        // targetes grup 2 (3-4)
+        if ((uid == "B5 55 0C 7B" || uid == "9B 52 12 7B") && allow == true && aspress == false) { // producte
+          barcelona = "caixa llapis";
+          nname = "tg2";
+          vv = 24;
+          timor(nname, vv, barcelona);
+        }
+
+        // targetes grup 3 (5-6)
+        if ((uid == "A6 00 0D 7B" || uid == "A2 76 12 7B") && allow == true && aspress == false) { // producte
+          barcelona = "caixa fulls";
+          nname = "tg3";
+          vv = 34;
+          timor(nname, vv, barcelona);
+        }
+
+        // targetes grup 4 (7-8)
+        if ((uid == "A0 22 12 7B" || uid == "27 41 0C 7B") && allow == true && aspress == false) { // producte
+          barcelona = "bolis 4col";
+          nname = "tg4";
+          vv = 49;
+          timor(nname, vv, barcelona);
+        }
+
+        // targetes grup 5 (9 - 10)
+        if ((uid == "95 DB 0B 7B" || uid == "37 02 0D 7B") && allow == true && aspress == false) { // producte
+          barcelona = "caixa tisores";
+          nname = "tg5";
+          vv = 69;
+          timor(nname, vv, barcelona);
+        }
+
+        // targetes grup 6 (11 - 12)
+        if ((uid == "D5 D0 0B 7B" || uid == "99 6D 0C 7B") && allow == true && aspress == false) { // producte
+          barcelona = "caixa llibretes";
+          nname = "tg6";
+          vv = 99;
+          timor(nname, vv, barcelona);
+        }
+
+      }
+    }
+    if (ir.decode(&results)) {  // si detecta una tecla del teclat
+      if (results.value == 0xFFFFFFFF) {
+        results.value = key;
+      }
+      switch (results.value) {  // si es la tecla vol+
+        case 0xFFC23D:
+          // fletxa dreta
+          Serial.println("fletxa fora");
+          delay(200);
+          key = results.value;  // reseteja els botons del teclat
+          ir.resume();
+          delay(200);
+          lcd.clear();
+          taraco = false;
+          break;
+        case 0xFFA25D:
+          // boto vermell
+          resetFunc();
+          break;
+      }
+      key = results.value;  // reseteja els botons del teclat
+      ir.resume();
+    }
+  }
+}
 void loop() {   // funció que s'executa tota l'estona
   int x;
   if (aspress == true)  // si la tecla d'entrar porductes esà seleccionada
@@ -799,43 +920,57 @@ void loop() {   // funció que s'executa tota l'estona
       uid = uid.substring(1);
       if (uid == "B9 6F E4 B2" && allow == true && aspress == false) { // producte J
         barcelona = "c. calculadores";
-        register_product("tgJ", 119);  // executa la funció registra producte
+        nname = "tgJ";
+        vv = 119;
+        register_product(nname, vv);  // executa la funció registra producte
       }
 
       // targetes grup 1 (1-2)
       if ((uid == "5A FE 0B 7B" || uid == "E9 A2 0C 7B") && allow == true && aspress == false) { // producte
         barcelona = "caixa gomes";
-        register_product("tg1", 19);
+        nname = "tg1";
+        vv = 19;
+        register_product(nname, vv);
       }
 
       // targetes grup 2 (3-4)
       if ((uid == "B5 55 0C 7B" || uid == "9B 52 12 7B") && allow == true && aspress == false) { // producte
         barcelona = "caixa llapis";
-        register_product("tg2", 24);
+        nname = "tg2";
+        vv = 24;
+        register_product(nname, vv);
       }
 
       // targetes grup 3 (5-6)
       if ((uid == "A6 00 0D 7B" || uid == "A2 76 12 7B") && allow == true && aspress == false) { // producte
         barcelona = "caixa fulls";
-        register_product("tg3", 34);
+        nname = "tg3";
+        vv = 34;
+        register_product(nname, vv);
       }
 
       // targetes grup 4 (7-8)
       if ((uid == "A0 22 12 7B" || uid == "27 41 0C 7B") && allow == true && aspress == false) { // producte
         barcelona = "bolis 4col";
-        register_product("tg4", 49);
+        nname = "tg4";
+        vv = 49;
+        register_product(nname, vv);
       }
 
       // targetes grup 5 (9 - 10)
       if ((uid == "95 DB 0B 7B" || uid == "37 02 0D 7B") && allow == true && aspress == false) { // producte
         barcelona = "caixa tisores";
-        register_product("tg5", 69);
+        nname = "tg5";
+        vv = 69;
+        register_product(nname, vv);
       }
 
       // targetes grup 6 (11 - 12)
       if ((uid == "D5 D0 0B 7B" || uid == "99 6D 0C 7B") && allow == true && aspress == false) { // producte
         barcelona = "caixa llibretes";
-        register_product("tg6", 99);
+        nname = "tg6";
+        vv = 99;
+        register_product(nname, vv);
       }
 
       // master tanqui sessió si qualsevol altre targeta està ficada i inicii la del master
