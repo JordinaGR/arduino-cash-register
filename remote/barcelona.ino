@@ -6,6 +6,17 @@
 #include <LiquidCrystal_I2C.h>
 #include <LiquidCrystal.h>
 
+/*
+   possibilitats dels registres:
+   Com que la pantalla només es de 20x4, ho he d'avrebiar així
+   iniciar sessio -->  iniSes
+   tancar sessio --> tncSes
+   entrar estoc --> estocD  (estoc fora)
+   vendre estoc --> estocF  (estoc dins)
+   ficar diners --> dinerD  (diners dins)
+   treure diners --> dinerF   (diners fora)
+*/
+
 // objecte screen 20x4
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 
@@ -524,6 +535,7 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
 
       case 0xFFE01F:
         // sumar - fletxa avall
+        brunzidor();
         int_num = numbers.toInt();  // passar la variable numbers a int
         value += int_num; // afegir el valor al registre de la caixa
         numbers = ""; // reiniciar la variable
@@ -552,7 +564,6 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
         }
         delay(3000);
         lcd.clear();
-        brunzidor();
         break;
 
       case 0xFF906F:
@@ -650,7 +661,7 @@ void keypadd() {  // funció per detectar la tecla que està seleccionada
         // fletxa dreta mirar productes
         brunzidor();
         Serial.print("fletxa dreta");
-        taraco = true;
+        taraco = true;  // indicar que pots entrar al while loop
         dili();
         break;
       case 0xFFA25D:
@@ -833,9 +844,9 @@ void register_product(String name, int value) {   // funció per vendre producte
 }
 
 
-void timor(String name, int value, String barcelona) {
+void timor(String name, int value, String barcelona) {    // funció per escriure a les pantalles el preu i producte
   Serial.println(barcelona);   // escriu a les pantalles el nom del producte i el preu
-  lcd.clear();
+  lcd.clear();      // escriu el nom "comercial" del producte i no de la targeta
   lcd.setCursor(0, 2);
   lcd.print(barcelona);
   lcd.setCursor(0, 3);
@@ -850,22 +861,22 @@ void timor(String name, int value, String barcelona) {
   lcd2.print(" Euros");
 }
 
-void dili() { // dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili dili
+void dili() { // funcio per mostrar a les pantalles els productes i preu
   delay(100);
   key = results.value;  // reseteja els botons del teclat
   ir.resume();
   delay(200);
-  while (taraco == true) {
+  while (taraco == true) { // while que no acabarà fins ha premer el botó fletxa dreta
     Serial.println("dins while");
     if (mfrc522.PICC_IsNewCardPresent()) {  // si es troba una targeta
       if (mfrc522.PICC_ReadCardSerial()) {
         String uid = getID();   // troba id de la targeta
         uid = uid.substring(1);
         if (uid == "B9 6F E4 B2" && allow == true && aspress == false) { // producte J
-          barcelona = "c. calculadores";
+          barcelona = "c. calculadores";    // defineix variables
           nname = "tgJ";
           vv = 119;
-          timor(nname, vv, barcelona);  // executa la funció registra producte
+          timor(nname, vv, barcelona);  // executa la funció timor
         }
         // targetes grup 1 (1-2)
         if ((uid == "5A FE 0B 7B" || uid == "E9 A2 0C 7B") && allow == true && aspress == false) { // producte
@@ -929,7 +940,7 @@ void dili() { // dili dili dili dili dili dili dili dili dili dili dili dili dil
           key = results.value;  // reseteja els botons del teclat
           ir.resume();
           delay(200);
-          lcd.clear();
+          lcd.clear();  //esborra les pantalles i surt del loop
           lcd2.clear();
           taraco = false;
           break;
@@ -1240,4 +1251,13 @@ void loop() {   // funció que s'executa tota l'estona
       }
     }
   }
+    /*
+      targetes treballadors
+      1: 15 E7 7E F1
+      2: 85 2E 80 F1
+      3: A5 1F 80 F1
+      4: A5 2F 80 F1
+      master: BA 00 CF 81
+  */
+  
 }
