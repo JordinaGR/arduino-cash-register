@@ -7,7 +7,7 @@ The main file is in the remote folder and is called remote.ino.
 *this is also a school project.
 
 # PDR
-Aquí hi ha tots els fitxers utilitzats. El programa principal està a la carpeta remote, el fitxer remote.ino. A l'altre carpeta hi ha el fitxer quan vaig començar a fer-ho amb un teclat i no un comandament a distància. Els altres fitxers, són programes mencionats en el document. Els he utilitzat per identificar els tags de les targetes i els números del comandament.
+Aquí hi ha tots els fitxers utilitzats. El programa principal està a la carpeta remote, el fitxer barcelona.ino. A l'altre carpeta hi ha el fitxer quan vaig començar a fer-ho amb un teclat i no un comandament a distància. Els altres fitxers, són programes mencionats en el document. Els he utilitzat per identificar els tags de les targetes i els números del comandament.
 
 Les següents són totes les connexions fetes, les quals no concretem en el document. 
 
