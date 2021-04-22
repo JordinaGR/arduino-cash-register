@@ -6,10 +6,14 @@ The main file is in the remote folder and is called barcelona.ino.
 
 *this is also a school project.
 
+Here's a video of the project (in catalan): https://youtu.be/ofhUXn1jWI4
+
 # PDR
 Aquí hi ha tots els fitxers utilitzats. El programa principal està a la carpeta remote, el fitxer barcelona.ino. A l'altre carpeta hi ha el fitxer quan vaig començar a fer-ho amb un teclat i no un comandament a distància. Els altres fitxers, són programes mencionats en el document. Els he utilitzat per identificar els tags de les targetes i els números del comandament.
 
 Les següents són totes les connexions fetes, les quals estan en els annexos del document. 
+
+Aquí hi ha un video del projecte: https://youtu.be/ofhUXn1jWI4
 
 ## pins
 
